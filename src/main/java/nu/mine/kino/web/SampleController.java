@@ -31,8 +31,11 @@ import javax.ws.rs.core.Response;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -51,26 +54,23 @@ import lombok.extern.slf4j.Slf4j;
 import nu.mine.kino.service.Hello;
 
 @Controller
+@RequestMapping("/echo")
 @Slf4j
 public class SampleController {
     private static final Pattern CHALLENGE_PATTERN = Pattern
             .compile("^Bearer *([^ ]+) *$", Pattern.CASE_INSENSITIVE);
 
-    @GetMapping("/")
     @ResponseBody
+    @CrossOrigin
+    @RequestMapping(produces = "application/json; charset=utf-8", method = RequestMethod.POST)
     public Hello helloWorld(
-            @RequestHeader(value = "Authorization", required = true) String authorization)
-            throws UNAUTHORIZED_Exception {
+            @RequestHeader(value = "Authorization", required = true) String authorization,
+            @RequestBody Hello hello) throws UNAUTHORIZED_Exception {
 
         Matcher matcher = CHALLENGE_PATTERN.matcher(authorization);
         if (matcher.matches()) {
             String id_token = matcher.group(1);
-
             if (checkIdToken(id_token)) {
-                Hello hello = new Hello();
-                hello.setId("001");
-                hello.setName("こんにちは");
-                hello.setIsDone(true);
                 return hello;
             } else {
                 throw new UNAUTHORIZED_Exception("ID Token is invalid.");
@@ -78,7 +78,6 @@ public class SampleController {
         }
         throw new UNAUTHORIZED_Exception(
                 "Authorization ヘッダから、Bearerトークンを取得できませんでした。");
-
     }
 
     private boolean checkIdToken(String id_token) {
