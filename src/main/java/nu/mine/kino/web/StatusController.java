@@ -16,18 +16,26 @@
 
 package nu.mine.kino.web;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
 @RequestMapping("/status")
+@Slf4j
 public class StatusController {
 
     @CrossOrigin
     @GetMapping
-    public String helloWorld() {
+    public String helloWorld(final HttpServletRequest req) {
+        log.debug("start.");
+        log.debug(new String(req.getRequestURL()));
+        log.debug("end.");
         return "hello";
     }
 
