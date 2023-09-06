@@ -22,7 +22,7 @@ $ java -jar ./target/app.jar --spring.profiles.active=dev  ← profileを指定�
 
 ```
 $ ECR_REPOSITORY_NAME=spring-boot-sample-tomcat
-$ version=0.0.6-SNAPSHOT  <- pom.xmlのバージョンにあわせるのがよさそう
+$ version=0.0.3  <- pom.xmlのバージョンにあわせるのがよさそう
 
 $ AWS_REGION_NAME=ap-northeast-1
 $ AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
