@@ -6,7 +6,7 @@
 
 	<groupId>nu.mine.kino</groupId>
 	<artifactId>spring-boot-sample-tomcat</artifactId>
-	<version>0.0.3</version>
+	<version>0.1.1-SNAPSHOT</version>
 
 	<!-- Inherit defaults from Spring Boot -->
 	<parent>
