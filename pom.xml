@@ -6,7 +6,7 @@
 
 	<groupId>nu.mine.kino</groupId>
 	<artifactId>spring-boot-sample-tomcat</artifactId>
-	<version>0.0.6-SNAPSHOT</version>
+	<version>0.0.7-SNAPSHOT</version>
 
 	<!-- Inherit defaults from Spring Boot -->
 	<parent>
@@ -60,6 +60,9 @@
 			<artifactId>logback-classic</artifactId>
 			<version>1.4.11</version>
 		</dependency>
+		<!--
+			Logbackで、JSON形式のログを扱いたいとき。	
+		-->
 		<dependency>
 			<groupId>net.logstash.logback</groupId>
 			<artifactId>logstash-logback-encoder</artifactId>
