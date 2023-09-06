@@ -28,6 +28,7 @@ $ aws ecr --region  ${AWS_REGION_NAME} get-login-password | docker login --usern
 
 $ REPOSITORY_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION_NAME}.amazonaws.com/${ECR_REPOSITORY_NAME}
 
-$ docker image build --build-arg JAR_FILE=target/app.jar -t ${REPOSITORY_URI}:${version} .
+# $ docker image build --build-arg JAR_FILE=target/app.jar -t ${REPOSITORY_URI}:${version} .
+$ docker image build -t ${REPOSITORY_URI}:${version} .
 $ docker push ${REPOSITORY_URI}:${version}
 ```

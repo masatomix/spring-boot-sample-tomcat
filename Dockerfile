@@ -6,12 +6,13 @@
 
 FROM openjdk:17-alpine
 VOLUME /tmp
-ARG JAR_FILE
-# COPY --from=build1 /opt/java/${JAR_FILE} app.jar
-COPY ${JAR_FILE} app.jar
+# ARG JAR_FILE
+# # COPY --from=build1 /opt/java/${JAR_FILE} app.jar
+# COPY ${JAR_FILE} app.jar
 
+COPY target/app.jar app.jar
 EXPOSE 8080
-# 
+ 
 # ENTRYPOINT ["java","-jar","${JAVA_OPTS}","/app.jar"]
 # ENTRYPOINT ["sh","-c","java -jar /app.jar ${JAVA_OPTS}"]
 ENTRYPOINT ["java","-jar","/app.jar"]
