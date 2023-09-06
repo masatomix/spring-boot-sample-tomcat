@@ -1,0 +1,9 @@
+version: "3.7"
+
+services:
+  fluent-bit:
+    image: amazon/aws-for-fluent-bit:latest
+    volumes:
+      - ./fluent-bit-test.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./input.txt:/fluent-bit/etc/input.txt
+      - ./output_dir:/fluent-bit/etc/output_dir
