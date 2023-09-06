@@ -32,3 +32,26 @@ $ REPOSITORY_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION_NAME}.amazonaws.com/${EC
 $ docker image build -t ${REPOSITORY_URI}:${version} .
 $ docker push ${REPOSITORY_URI}:${version}
 ```
+
+
+### redis起動
+
+```
+docker run --rm -p 6379:6379 -d --name redis redis
+```
+
+これで起動したdockerは通常起動したSpringBootは、localhost:6379でつながる
+SpringBootもDocker上で動かす場合は、
+
+```
+docker run --rm -p 6379:6379 -d --name redis redis
+docker run --rm -p 8080:8080 --link redis:REDIS_HOST -e --spring.profiles.active=dev --name myapp myorg/myapp
+```
+とかlinkして、application-dev.properties に
+
+```
+# Redis server host.
+spring.data.redis.host=REDIS_HOST
+```
+
+とかしておく
