@@ -25,9 +25,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @ImportResource("classpath:applicationContext.xml")
+@EnableAsync
 public class SampleTomcatApplication {
 
 	private static Log logger = LogFactory.getLog(SampleTomcatApplication.class);
