@@ -18,8 +18,11 @@ package nu.mine.kino.web;
 
 import java.net.InetAddress;
 import lombok.extern.slf4j.Slf4j;
+import nu.mine.kino.exceptions.ClientException;
+import nu.mine.kino.exceptions.ServerException;
 import nu.mine.kino.service.Hello;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -37,6 +40,37 @@ public class EchoController {
     @RequestMapping(value = "/echoLogger", method = RequestMethod.GET)
     public String defaultEcho() {
         return echo("Default Message.", "INFO");
+    }
+
+    /**
+     * メール送信API。メールに必要な情報実際はログ出力
+     * 
+     * @param from
+     * @param to
+     * @return
+     */
+    @RequestMapping(value = "/email", method = RequestMethod.GET)
+    public String customEcho(
+            @RequestParam(value = "from", defaultValue = "from@example.com") String from,
+            @RequestParam(value = "to", defaultValue = "to@example.com") String to,
+            @RequestParam(value = "subject", defaultValue = "to@example.com") String subject,
+            @RequestParam(value = "message", defaultValue = "to@example.com") String message) {
+        try {
+            MDC.put("email", "true");
+            MDC.put("subject", "テスト通知");
+
+            MDC.put("from", from);
+            MDC.put("to", to);
+            MDC.put("message", "メール本文です\nテストテスト");
+
+            log.info("メール送信します！");
+            return "メール送信します！";
+        } finally {
+            MDC.clear();
+            // MDC.remove("email");
+            // MDC.remove("subject");
+        }
+
     }
 
     @RequestMapping(value = "/echoLogger1", method = RequestMethod.GET)
@@ -92,6 +126,16 @@ public class EchoController {
         // 500番台エラーのサンプル
         throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "サービス停止中");
 
+    }
+
+    @RequestMapping(value = "/clientException", method = RequestMethod.GET)
+    public String clientExcetpion() {
+        throw new ClientException("クライアント起因の例外が発生しました");
+    }
+
+    @RequestMapping(value = "/serverException", method = RequestMethod.GET)
+    public String serverExcetpion() {
+        throw new ServerException("サーバ起因の例外が発生しました");
     }
 
     // @ResponseBody

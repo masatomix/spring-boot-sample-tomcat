@@ -1,4 +1,4 @@
-package nu.mine.kino.web;
+package nu.mine.kino.advice;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
