@@ -3,6 +3,9 @@
 
     <!-- デフォルト設定読み込み -->
     <!-- <include resource="org/springframework/boot/logging/logback/base.xml" /> -->
+    <!-- <include resource="org/springframework/boot/logging/logback/defaults.xml" /> -->
+    <!-- <include resource="org/springframework/boot/logging/logback/console-appender.xml" /> -->
+
 
     <property name="logFileName" value="app" />
 
@@ -12,7 +15,7 @@
             <target>System.out</target>
             <encoder>
                 <charset>UTF-8</charset>
-                <pattern>%d{yyyy/MM/dd HH:mm:ss} %-5level [%thread] - %msg%n</pattern>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>
             </encoder>
         </appender>
     </springProfile>
@@ -23,7 +26,7 @@
             <target>System.out</target>
             <encoder>
                 <charset>UTF-8</charset>
-                <pattern>%d{yyyy/MM/dd HH:mm:ss} %-5level [%thread] - %msg%n</pattern>
+                <pattern>%green(%d{yyyy-MM-dd HH:mm:ss}) [%thread] %highlight(%-5level) %logger:%-3L - %msg%n%X</pattern>
             </encoder>
         </appender>
     </springProfile>
@@ -32,7 +35,6 @@
     <springProfile name="production">
         <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-              <pattern>[%-5level]	%c{0}	%date{yyyy/MM/dd HH:mm:ss.SSS}	%msg%n</pattern>
             </encoder>
         </appender>
     </springProfile>
