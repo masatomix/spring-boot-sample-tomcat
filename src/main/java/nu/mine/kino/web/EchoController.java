@@ -129,7 +129,7 @@ public class EchoController {
     }
 
     @RequestMapping(value = "/clientException", method = RequestMethod.GET)
-    public String clientExcetpion() {
+    public String clientExcetpion() throws ClientException {
         throw new ClientException("クライアント起因の例外が発生しました");
     }
 
