@@ -1,12 +1,11 @@
 package nu.mine.kino.web;
 
+import nu.mine.kino.service.DelayService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import nu.mine.kino.service.DelayService;
 
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 public class DelayController {
@@ -18,7 +17,7 @@ public class DelayController {
     }
 
     @GetMapping("/delay")
-    public CompletableFuture<String> delay(@RequestParam(defaultValue = "30") int seconds) throws InterruptedException {
+    public String delay(@RequestParam(defaultValue = "30") int seconds) throws InterruptedException {
         return delayService.delaySeconds(seconds);
     }
 }
