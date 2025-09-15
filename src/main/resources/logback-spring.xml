@@ -8,6 +8,12 @@
 
 
     <property name="logFileName" value="app" />
+    <!-- パターンを外部定義 -->
+    <!-- <property name="PATTERN_STDOUT" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n"/> -->
+    <property name="PATTERN_STDOUT" value="%green(%d{yyyy-MM-dd HH:mm:ss}) [%thread] %X{requestId} %highlight(%-5level) %logger:%-3L - %msg%n"/>
+    <property name="PATTERN_STDOUT_MDC" value="%green(%d{yyyy-MM-dd HH:mm:ss}) [%thread] %X{requestId} %highlight(%-5level) %logger:%-3L - %msg%X%n"/>
+
+
 
     <!--ローカル環境用設定 -->
     <springProfile name="default">
@@ -15,7 +21,14 @@
             <target>System.out</target>
             <encoder>
                 <charset>UTF-8</charset>
-                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>
+                <pattern>${PATTERN_STDOUT}</pattern>
+            </encoder>
+        </appender>
+        <appender name="STDOUT_FW" class="ch.qos.logback.core.ConsoleAppender">
+            <target>System.out</target>
+            <encoder>
+                <charset>UTF-8</charset>
+                <pattern>${PATTERN_STDOUT_MDC}</pattern>
             </encoder>
         </appender>
     </springProfile>
@@ -26,7 +39,15 @@
             <target>System.out</target>
             <encoder>
                 <charset>UTF-8</charset>
-                <pattern>%green(%d{yyyy-MM-dd HH:mm:ss}) [%thread] %highlight(%-5level) %logger:%-3L - %msg%n%X</pattern>
+                <pattern>${PATTERN_STDOUT}</pattern>
+            </encoder>
+        </appender>
+
+        <appender name="STDOUT_FW" class="ch.qos.logback.core.ConsoleAppender">
+            <target>System.out</target>
+            <encoder>
+                <charset>UTF-8</charset>
+                <pattern>${PATTERN_STDOUT_MDC}</pattern>
             </encoder>
         </appender>
     </springProfile>
@@ -35,13 +56,28 @@
     <springProfile name="production">
         <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <!-- <includeMdc>false</includeMdc> MDCを無視 -->
+            </encoder>
+        </appender>
+
+        <appender name="STDOUT_FW" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             </encoder>
         </appender>
     </springProfile>
 
     <!-- <logger name="nu" level="DEBUG" />
     <logger name="org" level="INFO" /> -->
-  
+    
+    <!--FWのLogger-->
+    <logger name="nu.mine.kino.advice" additivity="false">
+        <appender-ref ref="STDOUT_FW"/>
+    </logger>
+    <logger name="nu.mine.kino.interceptor" additivity="false">
+        <appender-ref ref="STDOUT_FW"/>
+    </logger>
+
+    <!--その他のLogger-->
     <root>
       <appender-ref ref="STDOUT" />
     </root>
