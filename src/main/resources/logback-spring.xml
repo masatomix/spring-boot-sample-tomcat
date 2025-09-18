@@ -73,6 +73,9 @@
     <logger name="nu.mine.kino.advice" additivity="false">
         <appender-ref ref="STDOUT_FW"/>
     </logger>
+    <logger name="nu.mine.kino.filter" additivity="false">
+        <appender-ref ref="STDOUT_FW"/>
+    </logger>
     <logger name="nu.mine.kino.interceptor" additivity="false">
         <appender-ref ref="STDOUT_FW"/>
     </logger>
