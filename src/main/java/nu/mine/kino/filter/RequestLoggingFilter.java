@@ -5,6 +5,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -13,10 +19,12 @@ import nu.mine.kino.interceptor.MDCKey;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
-// @Component // 有効にする場合はコメントを外して。
+@Component // 有効にする場合はコメントを外して。
 @Slf4j
 public class RequestLoggingFilter extends OncePerRequestFilter {
 
@@ -35,14 +43,12 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         // レスポンスヘッダにも付けると呼び元でも追跡できる
         response.setHeader("X-Request-Id", requestId);
 
-        String method = request.getMethod();
-        String requestURI = request.getRequestURI();
+        // リクエスト・レスポンスのラップ
+        HttpServletRequest wrappedRequest = new ContentCachingRequestWrapper(request);
+        HttpServletResponse wrappedResponse = new ContentCachingResponseWrapper(response);
 
-        Map<String, Object> requestMap = Map.of(
-                MDCKey.METHOD.key(), method,
-                MDCKey.URI.key(), requestURI
-        //
-        );
+        // ログ出力
+        Map<String, Object> requestMap = createRequestMap(wrappedRequest);
         log.info("FWログ出力(Request)",
                 keyValue("request", requestMap),
                 keyValue(MDCKey.APP_TYPE.key(), "FW"), // FWの出しているログだよ、ということを明示するフラグ
@@ -50,24 +56,15 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
         try {
             // 後続処理へ
-            filterChain.doFilter(request, response);
+            filterChain.doFilter(wrappedRequest, wrappedResponse);
 
         } finally {
+
             try {
-                int status = response.getStatus();
-                String statusStr = String.valueOf(status);
+                // レスポンスを書き戻す（必須）
+                ((ContentCachingResponseWrapper) wrappedResponse).copyBodyToResponse();
 
-                // 開始時刻を取り出して処理時間を計算
-                Long endTime = System.currentTimeMillis();
-                long duration = endTime - startTime;
-
-                String durationStr = String.valueOf(duration);
-
-                Map<String, Object> responseMap = Map.of(
-                        MDCKey.DURATION.key(), durationStr,
-                        MDCKey.STATUS.key(), statusStr
-                //
-                );
+                Map<String, Object> responseMap = getResponseMap(startTime, wrappedResponse);
                 log.info("FWログ出力(Request/Response)",
                         keyValue("request", requestMap),
                         keyValue("response", responseMap),
@@ -79,7 +76,115 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
                 for (MDCKey key : MDCKey.values()) {
                     MDC.remove(key.key());
                 }
+
             }
         }
     }
+
+    private Map<String, Object> getResponseMap(long startTime, HttpServletResponse response) {
+        int status = response.getStatus();
+        String statusStr = String.valueOf(status);
+
+        // 開始時刻を取り出して処理時間を計算
+        Long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
+
+        String durationStr = String.valueOf(duration);
+
+        // レスポンスヘッダ
+        // Map<String, List<String>> headers = new LinkedHashMap<>();
+        // for (String name : response.getHeaderNames()) {
+        // headers.put(name, new ArrayList<>(response.getHeaders(name)));
+        // }
+
+        Map<String, List<String>> headers = getResponseHeaders(response);
+        String body = getResponseBody((ContentCachingResponseWrapper) response);
+
+        Map<String, Object> responseMap = Map.of(
+                MDCKey.DURATION.key(), durationStr,
+                MDCKey.STATUS.key(), statusStr,
+                "headers", headers,
+                "body", body
+        //
+        );
+        return responseMap;
+    }
+
+    private Map<String, List<String>> getResponseHeaders(HttpServletResponse response) {
+        Map<String, List<String>> headers = new LinkedHashMap<>();
+        for (String name : response.getHeaderNames()) {
+            headers.put(name, new ArrayList<>(response.getHeaders(name)));
+        }
+        return headers;
+    }
+
+    private String getResponseBody(ContentCachingResponseWrapper response) {
+        byte[] content = response.getContentAsByteArray();
+        if (content.length == 0)
+            return "";
+        String body = new String(content, getCharset(response.getCharacterEncoding()));
+
+        // JSON の場合だけログ出力
+        String contentType = response.getContentType();
+        if (contentType != null && contentType.toLowerCase().contains("json")) {
+            return body;
+        } else {
+            return ""; // JSON 以外は空文字
+        }
+    }
+
+    private static java.nio.charset.Charset getCharset(String encoding) {
+        if (encoding != null) {
+            try {
+                return java.nio.charset.Charset.forName(encoding);
+            } catch (Exception ignored) {
+            }
+        }
+        return StandardCharsets.UTF_8;
+    }
+
+    private Map<String, Object> createRequestMap(HttpServletRequest request) throws IOException {
+        String method = request.getMethod();
+        String requestURI = request.getRequestURI();
+
+        // body
+        String body = "";
+        if (request instanceof ContentCachingRequestWrapper wrapper) {
+            byte[] content = wrapper.getContentAsByteArray();
+            body = new String(content, getCharset(request.getCharacterEncoding()));
+        }
+
+        // ヘッダ
+        Map<String, String> headers = new HashMap<>();
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            headers.put(headerName, request.getHeader(headerName));
+        }
+
+        // パラメータ取得
+        // Map<String, String[]> paramMap = request.getParameterMap();
+        // Map<String, Object> parameters = new HashMap<>();
+        // for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
+        // String key = entry.getKey();
+        // String[] value = entry.getValue();
+        // // 配列は1個なら文字列、複数ならそのまま配列で保持
+        // parameters.put(key, value.length == 1 ? value[0] : value);
+        // }
+
+        // パラメータ
+        Map<String, Object> parameters = new HashMap<>();
+        request.getParameterMap().forEach((key, value) -> parameters.put(key, value.length == 1 ? value[0] : value));
+
+        Map<String, Object> requestMap = Map.of(
+                MDCKey.METHOD.key(), method,
+                MDCKey.URI.key(), requestURI,
+                "headers", headers,
+                "body", body,
+                "parameters", parameters
+        //
+        );
+        return requestMap;
+    }
+
 }
