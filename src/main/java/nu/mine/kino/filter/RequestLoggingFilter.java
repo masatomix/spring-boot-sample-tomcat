@@ -79,6 +79,51 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         }
     }
 
+    private Map<String, Object> createRequestMap(HttpServletRequest request) throws IOException {
+        String method = request.getMethod();
+        String requestURI = request.getRequestURI();
+
+        // body
+        String body = "";
+        if (request instanceof ContentCachingRequestWrapper wrapper) {
+            byte[] content = wrapper.getContentAsByteArray();
+            body = new String(content, getCharset(request.getCharacterEncoding()));
+        }
+
+        // ヘッダ
+        Map<String, String> headers = new HashMap<>();
+        // Enumeration<String> headerNames = request.getHeaderNames();
+        // while (headerNames.hasMoreElements()) {
+        // String headerName = headerNames.nextElement();
+        // headers.put(headerName, request.getHeader(headerName));
+        // }
+        Collections.list(request.getHeaderNames()).forEach(name -> headers.put(name, request.getHeader(name)));
+
+        // パラメータ取得
+        // Map<String, String[]> paramMap = request.getParameterMap();
+        // Map<String, Object> parameters = new HashMap<>();
+        // for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
+        // String key = entry.getKey();
+        // String[] value = entry.getValue();
+        // // 配列は1個なら文字列、複数ならそのまま配列で保持
+        // parameters.put(key, value.length == 1 ? value[0] : value);
+        // }
+
+        // パラメータ
+        Map<String, Object> parameters = new HashMap<>();
+        request.getParameterMap().forEach((key, value) -> parameters.put(key, value.length == 1 ? value[0] : value));
+
+        Map<String, Object> requestMap = Map.of(
+                MDCKey.METHOD.key(), method,
+                MDCKey.URI.key(), requestURI,
+                "headers", headers,
+                "body", body,
+                "parameters", parameters
+        //
+        );
+        return requestMap;
+    }
+
     private Map<String, Object> getResponseMap(long startTime, HttpServletResponse response) throws IOException {
         int status = response.getStatus();
         String statusStr = String.valueOf(status);
@@ -96,10 +141,12 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         // }
 
         // --- Body は先に取得 ---
-        String body = getResponseBody((ContentCachingResponseWrapper) response);
-
-        // レスポンスを書き戻す（必須）
-        ((ContentCachingResponseWrapper) response).copyBodyToResponse();
+        String body = "";
+        if (response instanceof ContentCachingResponseWrapper wrapper) {
+            body = getResponseBody(wrapper);
+            // レスポンスを書き戻す（必須）
+            wrapper.copyBodyToResponse();
+        }
 
         // --- ヘッダは書き戻した後で取得 ---
         Map<String, List<String>> headers = getResponseHeaders(response);
@@ -145,51 +192,6 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
             }
         }
         return StandardCharsets.UTF_8;
-    }
-
-    private Map<String, Object> createRequestMap(HttpServletRequest request) throws IOException {
-        String method = request.getMethod();
-        String requestURI = request.getRequestURI();
-
-        // body
-        String body = "";
-        if (request instanceof ContentCachingRequestWrapper wrapper) {
-            byte[] content = wrapper.getContentAsByteArray();
-            body = new String(content, getCharset(request.getCharacterEncoding()));
-        }
-
-        // ヘッダ
-        Map<String, String> headers = new HashMap<>();
-        // Enumeration<String> headerNames = request.getHeaderNames();
-        // while (headerNames.hasMoreElements()) {
-        //     String headerName = headerNames.nextElement();
-        //     headers.put(headerName, request.getHeader(headerName));
-        // }
-        Collections.list(request.getHeaderNames()).forEach(name -> headers.put(name, request.getHeader(name)));
-
-        // パラメータ取得
-        // Map<String, String[]> paramMap = request.getParameterMap();
-        // Map<String, Object> parameters = new HashMap<>();
-        // for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
-        // String key = entry.getKey();
-        // String[] value = entry.getValue();
-        // // 配列は1個なら文字列、複数ならそのまま配列で保持
-        // parameters.put(key, value.length == 1 ? value[0] : value);
-        // }
-
-        // パラメータ
-        Map<String, Object> parameters = new HashMap<>();
-        request.getParameterMap().forEach((key, value) -> parameters.put(key, value.length == 1 ? value[0] : value));
-
-        Map<String, Object> requestMap = Map.of(
-                MDCKey.METHOD.key(), method,
-                MDCKey.URI.key(), requestURI,
-                "headers", headers,
-                "body", body,
-                "parameters", parameters
-        //
-        );
-        return requestMap;
     }
 
 }
