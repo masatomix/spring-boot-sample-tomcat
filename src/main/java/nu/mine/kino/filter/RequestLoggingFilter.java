@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -61,9 +62,6 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         } finally {
 
             try {
-                // レスポンスを書き戻す（必須）
-                ((ContentCachingResponseWrapper) wrappedResponse).copyBodyToResponse();
-
                 Map<String, Object> responseMap = getResponseMap(startTime, wrappedResponse);
                 log.info("FWログ出力(Request/Response)",
                         keyValue("request", requestMap),
@@ -81,7 +79,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         }
     }
 
-    private Map<String, Object> getResponseMap(long startTime, HttpServletResponse response) {
+    private Map<String, Object> getResponseMap(long startTime, HttpServletResponse response) throws IOException {
         int status = response.getStatus();
         String statusStr = String.valueOf(status);
 
@@ -97,8 +95,14 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         // headers.put(name, new ArrayList<>(response.getHeaders(name)));
         // }
 
-        Map<String, List<String>> headers = getResponseHeaders(response);
+        // --- Body は先に取得 ---
         String body = getResponseBody((ContentCachingResponseWrapper) response);
+
+        // レスポンスを書き戻す（必須）
+        ((ContentCachingResponseWrapper) response).copyBodyToResponse();
+
+        // --- ヘッダは書き戻した後で取得 ---
+        Map<String, List<String>> headers = getResponseHeaders(response);
 
         Map<String, Object> responseMap = Map.of(
                 MDCKey.DURATION.key(), durationStr,
@@ -156,11 +160,12 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
         // ヘッダ
         Map<String, String> headers = new HashMap<>();
-        Enumeration<String> headerNames = request.getHeaderNames();
-        while (headerNames.hasMoreElements()) {
-            String headerName = headerNames.nextElement();
-            headers.put(headerName, request.getHeader(headerName));
-        }
+        // Enumeration<String> headerNames = request.getHeaderNames();
+        // while (headerNames.hasMoreElements()) {
+        //     String headerName = headerNames.nextElement();
+        //     headers.put(headerName, request.getHeader(headerName));
+        // }
+        Collections.list(request.getHeaderNames()).forEach(name -> headers.put(name, request.getHeader(name)));
 
         // パラメータ取得
         // Map<String, String[]> paramMap = request.getParameterMap();
