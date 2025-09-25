@@ -7,7 +7,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import lombok.AllArgsConstructor;
 import nu.mine.kino.interceptor.MDCLoggingInterceptor;
 
-@Configuration
+// @Configuration
 @AllArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
     private final MDCLoggingInterceptor loggingInterceptor;
