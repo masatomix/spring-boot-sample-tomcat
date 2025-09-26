@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,7 +19,6 @@ import nu.mine.kino.interceptor.MDCKey;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
@@ -45,7 +43,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         response.setHeader("X-Request-Id", requestId);
 
         // リクエスト・レスポンスのラップ
-        HttpServletRequest wrappedRequest = new ContentCachingRequestWrapper(request);
+        HttpServletRequest wrappedRequest = new ReusableRequestWrapper(request);// ContentCachingRequestWrapper はdoFilterのあとに呼ばれる想定のためつかえなかった(Bodyがとれなかった)
         HttpServletResponse wrappedResponse = new ContentCachingResponseWrapper(response);
 
         // ログ出力
@@ -83,13 +81,6 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         String method = request.getMethod();
         String requestURI = request.getRequestURI();
 
-        // body
-        String body = "";
-        if (request instanceof ContentCachingRequestWrapper wrapper) {
-            byte[] content = wrapper.getContentAsByteArray();
-            body = new String(content, getCharset(request.getCharacterEncoding()));
-        }
-
         // ヘッダ
         Map<String, String> headers = new HashMap<>();
         // Enumeration<String> headerNames = request.getHeaderNames();
@@ -113,6 +104,8 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         Map<String, Object> parameters = new HashMap<>();
         request.getParameterMap().forEach((key, value) -> parameters.put(key, value.length == 1 ? value[0] : value));
 
+        // body
+        String body = request instanceof ReusableRequestWrapper wrapper ? getRequestBody(wrapper) : "";
         Map<String, Object> requestMap = Map.of(
                 MDCKey.METHOD.key(), method,
                 MDCKey.URI.key(), requestURI,
@@ -122,6 +115,12 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         //
         );
         return requestMap;
+    }
+
+    private String getRequestBody(ReusableRequestWrapper request) {
+        byte[] content = request.getCachedBody();
+        // body = new String(content, StandardCharsets.UTF_8);
+        return new String(content, getCharset(request.getCharacterEncoding()));
     }
 
     private Map<String, Object> getResponseMap(long startTime, HttpServletResponse response) throws IOException {
@@ -140,13 +139,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         // headers.put(name, new ArrayList<>(response.getHeaders(name)));
         // }
 
-        // --- Body は先に取得 ---
-        String body = "";
-        if (response instanceof ContentCachingResponseWrapper wrapper) {
-            body = getResponseBody(wrapper);
-            // レスポンスを書き戻す（必須）
-            wrapper.copyBodyToResponse();
-        }
+        String body = response instanceof ContentCachingResponseWrapper wrapper ? getResponseBody(wrapper) : "";
 
         // --- ヘッダは書き戻した後で取得 ---
         Map<String, List<String>> headers = getResponseHeaders(response);
@@ -169,19 +162,28 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         return headers;
     }
 
-    private String getResponseBody(ContentCachingResponseWrapper response) {
-        byte[] content = response.getContentAsByteArray();
-        if (content.length == 0)
-            return "";
-        String body = new String(content, getCharset(response.getCharacterEncoding()));
+    private String getResponseBody(ContentCachingResponseWrapper response) throws IOException {
+        try {
+            byte[] content = response.getContentAsByteArray();
+            if (content.length == 0)
+                return "";
 
-        // JSON の場合だけログ出力
-        String contentType = response.getContentType();
-        if (contentType != null && contentType.toLowerCase().contains("json")) {
-            return body;
-        } else {
-            return ""; // JSON 以外は空文字
+            // String body = new String(content,
+            // getCharset(response.getCharacterEncoding()));
+            String body = new String(content, StandardCharsets.UTF_8);
+
+            // JSON の場合だけログ出力
+            String contentType = response.getContentType();
+            if (contentType != null && contentType.toLowerCase().contains("json")) {
+                return body;
+            } else {
+                return ""; // JSON 以外は空文字
+            }
+        } finally {
+            // レスポンスを書き戻す（必須）
+            response.copyBodyToResponse();
         }
+
     }
 
     private static java.nio.charset.Charset getCharset(String encoding) {
