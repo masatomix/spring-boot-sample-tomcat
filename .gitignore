@@ -106,3 +106,9 @@ hs_err_pid*
 
 target/
 
+# 環境変数・ローカル設定・ログ(task#1056 Step 0)
+.env
+.env.local
+*.log
+.DS_Store
+
