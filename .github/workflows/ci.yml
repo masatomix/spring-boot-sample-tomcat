@@ -1,6 +1,5 @@
-# CI 標準テンプレート(masatomix/task#1055 Phase 1 / #1056 現代化 Step 0)。
-# 現時点のベースライン(Spring Boot 3.1.2 / Java 17)を検証する。
-# Java バージョンは現代化の各ステップ(Step 3 で 21 へ)に合わせて更新する。
+# CI 標準テンプレート(masatomix/task#1055 Phase 1 / #1056 現代化)。
+# Spring Boot 4.0 / Java 21（Step 3 で 17 から更新）を検証する。
 name: CI
 
 on:
@@ -16,7 +15,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
           cache: maven
       - name: Build & test
         run: mvn -B verify
