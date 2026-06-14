@@ -115,6 +115,7 @@
 			<artifactId>jaxb-runtime</artifactId>
 			<version>2.3.2</version>
 		</dependency>
+		<!-- ※未検証・参考: Redis セッションを使う場合の依存。本サンプルでは無効化したまま残す。 -->
 		<!-- <dependency>
 			<groupId>org.springframework.session</groupId>
 			<artifactId>spring-session-data-redis</artifactId>
@@ -123,6 +124,13 @@
 			<groupId>redis.clients</groupId>
 			<artifactId>jedis</artifactId>
 		</dependency> -->
+
+		<!-- テスト（スモークテストの安全網。task#1056 Step 0） -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<!-- Package as an executable jar -->
