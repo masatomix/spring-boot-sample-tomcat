@@ -12,12 +12,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.1.2</version>
+		<version>4.0.7</version>
 	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<lombok.version>1.18.26</lombok.version>
+		<java.version>21</java.version>
 	</properties>
 
 	<!-- Add typical dependencies for a web application -->
@@ -46,29 +46,20 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+		<!-- lombok の版は Spring Boot の BOM が管理する（JDK 21 互換版が選択される。task#1056 Step 3）。 -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>${lombok.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-core</artifactId>
-			<version>1.4.11</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.4.11</version>
-		</dependency>
+		<!-- logback 本体は Spring Boot の BOM が管理する（明示ピンを撤去。task#1056 Step 3）。 -->
 		<!--
-			Logbackで、JSON形式のログを扱いたいとき。	
+			Logbackで、JSON形式のログを扱いたいとき。BOM 管理外のため版は明示する。
 		-->
 		<dependency>
 			<groupId>net.logstash.logback</groupId>
 			<artifactId>logstash-logback-encoder</artifactId>
-			<version>7.4</version>
+			<version>8.1</version>
 			<!-- Use runtime scope if the project does not have any compile-time usage of
 			logstash-logback-encoder,
          such as usage of StructuredArguments/Markers or implementations such as
@@ -102,6 +93,13 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Spring Boot 4.0 で MockMvc 等の WebMVC スライステスト支援は専用スターターに
+		     分離された（@AutoConfigureMockMvc の auto-config を提供。task#1056 Step 3）。 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

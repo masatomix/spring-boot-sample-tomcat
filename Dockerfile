@@ -1,18 +1,21 @@
-# FROM maven:3.5.2-jdk-8  AS build1
-# RUN mkdir -p /opt/java/src/
-# ADD ./pom.xml /opt/java/
-# ADD ./src /opt/java/src
-# RUN cd /opt/java && mvn install
+# マルチステージビルド（task#1056 Step 3）。
+# 旧来は openjdk:17-alpine（メンテ終了イメージ）に事前ビルド済み jar を COPY する方式
+# だったが、ビルドからイメージ内で完結させ、実行は eclipse-temurin の JRE で行う。
 
-FROM openjdk:17-alpine
+# ---- build stage ----
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /workspace
+# 依存解決を先に行いレイヤキャッシュを効かせる
+COPY pom.xml .
+RUN mvn -B -q dependency:go-offline
+COPY src ./src
+# テストは CI(mvn verify)で実施済みのためイメージビルドでは省略
+RUN mvn -B -q clean package -DskipTests
+
+# ---- runtime stage ----
+FROM eclipse-temurin:21-jre
+WORKDIR /app
 VOLUME /tmp
-# ARG JAR_FILE
-# # COPY --from=build1 /opt/java/${JAR_FILE} app.jar
-# COPY ${JAR_FILE} app.jar
-
-COPY target/app.jar app.jar
+COPY --from=build /workspace/target/app.jar app.jar
 EXPOSE 8080
- 
-# ENTRYPOINT ["java","-jar","${JAVA_OPTS}","/app.jar"]
-# ENTRYPOINT ["sh","-c","java -jar /app.jar ${JAVA_OPTS}"]
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
