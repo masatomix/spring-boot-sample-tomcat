@@ -73,7 +73,6 @@ public class EchoController {
     @RequestMapping(value = "/echoBody", produces = "application/json; charset=utf-8", method = RequestMethod.POST)
     public Hello helloWorld(@RequestBody Hello hello) {
         log.info("{}", hello);
-        System.out.println(hello.toString());
         return hello;
     }
 
@@ -93,27 +92,6 @@ public class EchoController {
         throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "サービス停止中");
 
     }
-
-    // @ResponseBody
-    // @RequestMapping(value = "/error", produces = "application/json;
-    // charset=utf-8", method = RequestMethod.POST)
-    // public Hello helloWorld(
-    // @RequestHeader(value = "Authorization", required = true) String
-    // authorization,
-    // @RequestBody Hello hello) throws UNAUTHORIZED_Exception {
-
-    // Matcher matcher = CHALLENGE_PATTERN.matcher(authorization);
-    // if (matcher.matches()) {
-    // String id_token = matcher.group(1);
-    // if (JWTUtils.checkIdToken(id_token)) {
-    // return hello;
-    // } else {
-    // throw new UNAUTHORIZED_Exception("ID Token is invalid.");
-    // }
-    // }
-    // throw new UNAUTHORIZED_Exception(
-    // "Authorization ヘッダから、Bearerトークンを取得できませんでした。");
-    // }
 
     private String getHostName() {
         try {
