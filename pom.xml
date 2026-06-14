@@ -18,7 +18,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<lombok.version>1.18.26</lombok.version>
-		<jersey.version>2.32</jersey.version>
 	</properties>
 
 	<!-- Add typical dependencies for a web application -->
@@ -32,9 +31,12 @@
 			<artifactId>spring-boot-configuration-processor</artifactId>
 			<optional>true</optional>
 		</dependency> -->
+		<!-- JWT(Bearer トークン)検証は Spring Security の resource server に委譲する（task#1056 Step 2）。
+		     旧 JWTUtils + Jersey + nimbus 直依存を置き換える。nimbus は本 starter が
+		     最新版を transitive で管理する。 -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-jersey</artifactId>
+			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -74,11 +76,6 @@
     <scope>runtime</scope>
     -->
 		</dependency>
-		<dependency>
-			<groupId>com.nimbusds</groupId>
-			<artifactId>nimbus-jose-jwt</artifactId>
-			<version>7.0</version>
-		</dependency>
 		<!--
  		<dependency>
 			<groupId>com.google.firebase</groupId>
@@ -87,33 +84,9 @@
 		</dependency>
 		-->
 		<dependency>
-			<groupId>org.glassfish.jersey.core</groupId>
-			<artifactId>jersey-client</artifactId>
-			<version>${jersey.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.13.0</version>
-		</dependency>
-		<dependency>
-			<groupId>javax</groupId>
-			<artifactId>javaee-api</artifactId>
-			<version>8.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<!-- API, java.xml.bind module -->
-		<dependency>
-			<groupId>jakarta.xml.bind</groupId>
-			<artifactId>jakarta.xml.bind-api</artifactId>
-			<version>2.3.2</version>
-		</dependency>
-
-		<!-- Runtime, com.sun.xml.bind module -->
-		<dependency>
-			<groupId>org.glassfish.jaxb</groupId>
-			<artifactId>jaxb-runtime</artifactId>
-			<version>2.3.2</version>
 		</dependency>
 		<!-- ※未検証・参考: Redis セッションを使う場合の依存。本サンプルでは無効化したまま残す。 -->
 		<!-- <dependency>
